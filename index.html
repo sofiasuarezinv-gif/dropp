@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#09070e">
+<title>Plantillas WhatsApp · GlowShop</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<style>
+:root{
+  --paper:#09070e; --card:#150f24; --ink:#efeaf7; --muted:#9a8fb2; --line:#2a2138;
+  --green:#b07bff; --green-2:#8b3dff; --green-soft:#21173a; --bubble:#171026; --bubble-line:#322549;
+  --amber:#eab34a; --amber-soft:#2a2213;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 14px 36px rgba(0,0,0,.5);
+  --radius:14px;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+:root[data-theme="light"],:root[data-theme="dark"]{
+  --paper:#09070e; --card:#150f24; --ink:#efeaf7; --muted:#9a8fb2; --line:#2a2138;
+  --green:#b07bff; --green-2:#8b3dff; --green-soft:#21173a; --bubble:#171026; --bubble-line:#322549;
+  --amber:#eab34a; --amber-soft:#2a2213;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 14px 36px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
+/* header */
+.brand{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(150deg,var(--green),var(--green-2));
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.brand h1{font-size:19px;font-weight:800;letter-spacing:-.01em}
+.brand .sub{font-size:12.5px;color:var(--muted);width:100%;margin-top:2px}
+/* panel datos */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:16px;margin-top:16px}
+.panel .ph{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.panel .ph .t{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f{display:flex;flex-direction:column;gap:5px}
+.f.wide{grid-column:1 / -1}
+.f label{font-size:11.5px;font-weight:600;color:var(--muted)}
+.f input,.f select,.f textarea{font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--paper);
+  border:1px solid var(--line);border-radius:10px;padding:10px 11px;width:100%;outline:none;transition:border-color .15s,box-shadow .15s}
+.f textarea{resize:vertical;min-height:44px}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+.linkline{grid-column:1 / -1;font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;min-height:16px}
+.linkline a{color:var(--green);text-decoration:none;word-break:break-all}
+.btn{font-family:var(--sans);font-weight:700;font-size:13.5px;border:1px solid var(--line);background:var(--card);
+  color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--green);color:var(--green-2)}
+.btn.ghost{background:transparent}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
+.switch input{position:absolute;opacity:0}
+.track{width:38px;height:22px;border-radius:999px;background:var(--line);position:relative;transition:.2s;flex-shrink:0}
+.track::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.switch input:checked + .track{background:var(--green)}
+.switch input:checked + .track::after{transform:translateX(16px)}
+.switch input:focus-visible + .track{box-shadow:0 0 0 3px var(--green-soft)}
+.saludo{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-shrink:0}
+.saludo select{font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;outline:none;cursor:pointer}
+.saludo select:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+/* toolbar */
+.toolbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 88%,transparent);
+  backdrop-filter:blur(8px);padding:12px 0;margin-top:18px;border-bottom:1px solid var(--line)}
+.search{position:relative}
+.search input{width:100%;padding:11px 12px 11px 38px;border:1px solid var(--line);border-radius:11px;background:var(--card);
+  color:var(--ink);font-size:14px;font-family:var(--sans);outline:none}
+.search input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.cats{display:flex;gap:8px;overflow-x:auto;padding-top:10px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card);color:var(--muted);cursor:pointer;transition:.15s}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff}
+/* cards */
+.cards{display:grid;grid-template-columns:1fr;gap:14px;margin-top:16px}
+.tcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:14px;display:flex;flex-direction:column;gap:12px}
+.tcard .th{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tcard .tt{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.tcard .cat{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--green);
+  background:var(--green-soft);padding:3px 8px;border-radius:999px}
+.bubble{background:var(--bubble);border:1px solid var(--bubble-line);border-radius:12px;border-top-left-radius:4px;
+  padding:12px 14px;font-size:13.5px;white-space:pre-wrap;word-break:break-word;line-height:1.5;color:var(--ink);
+  max-height:none}
+.bubble .v{background:var(--green-soft);color:var(--green);border-radius:4px;padding:0 3px;font-weight:600}
+.bubble .miss{background:var(--amber-soft);color:var(--amber);border-radius:4px;padding:0 4px;font-weight:600}
+.bubble a{color:var(--green-2)}
+.copybtn{align-self:flex-start;font-weight:700;font-size:13.5px;border:none;border-radius:10px;padding:10px 16px;cursor:pointer;
+  background:linear-gradient(150deg,var(--green),var(--green-2));color:#fff;display:inline-flex;align-items:center;gap:8px;transition:.15s}
+.copybtn:hover{filter:brightness(1.06)}
+.copybtn.done{background:var(--ink);color:var(--paper)}
+.empty{text-align:center;color:var(--muted);padding:40px;font-size:14px}
+/* toast */
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
+  background:var(--ink);color:var(--paper);font-weight:600;font-size:13.5px;padding:11px 18px;border-radius:999px;
+  box-shadow:var(--shadow);transition:.25s;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(min-width:680px){
+  .grid{grid-template-columns:1fr 1fr 1fr}
+  .cards{grid-template-columns:1fr 1fr}
+  .toolbar .row{display:flex;gap:12px;align-items:center}
+  .toolbar .search{flex:1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* OCR capturas */
+.ocr{margin-top:12px;border-top:1px dashed var(--line);padding-top:14px}
+.ocr .oh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.ocr .ot{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.drop{border:1.5px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--muted);
+  font-size:13px;cursor:pointer;transition:.15s;background:var(--paper)}
+.drop:hover,.drop.over{border-color:var(--green);color:var(--green);background:var(--green-soft)}
+.drop b{color:var(--ink)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.thumb{position:relative;width:70px;height:70px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb button{position:absolute;top:2px;right:2px;width:20px;height:20px;border:none;border-radius:50%;
+  background:rgba(0,0,0,.7);color:#fff;font-size:12px;cursor:pointer;line-height:1}
+.ocr .bar{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:12px;display:none}
+.ocr .bar.on{display:block} .ocr .bar i{display:block;height:100%;background:var(--green);width:0;transition:width .2s}
+.ocr .status{font-size:12px;color:var(--muted);margin-top:8px;min-height:16px}
+.ocr .raw{margin-top:10px;display:none}
+.ocr .raw.on{display:block}
+.ocr .raw label{font-size:11.5px;color:var(--muted);font-weight:600}
+.ocr .raw textarea{width:100%;min-height:80px;margin-top:5px;border:1px solid var(--line);border-radius:10px;
+  background:var(--paper);color:var(--ink);font-size:12.5px;padding:9px;font-family:var(--sans);resize:vertical}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="brand">
+    <div class="logo">💬</div>
+    <div>
+      <h1>Plantillas WhatsApp · GlowShop</h1>
+      <div class="sub">Escribe los datos una vez y copia cada mensaje con un clic.</div>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="ph">
+      <span class="t">Datos del pedido</span>
+      <button class="btn ghost" id="clear">✕ Limpiar</button>
+    </div>
+    <div class="grid">
+      <div class="f"><label>Nombre</label><input id="nombre" placeholder="Nombre del cliente"></div>
+      <div class="f"><label>Producto</label><input id="producto" placeholder="Nombre del producto"></div>
+      <div class="f"><label>Precio</label><input id="valor" placeholder="89.900"></div>
+      <div class="f"><label>Oferta</label><input id="oferta" placeholder="30% OFF"></div>
+      <div class="f"><label>Cantidad</label><input id="cantidad" placeholder="1"></div>
+      <div class="f"><label>N.º de guía</label><input id="guia" placeholder="240054343807"></div>
+      <div class="f"><label>Transportadora</label>
+        <select id="transportadora">
+          <option value="">— Seleccionar —</option>
+          <option value="Interrapidísimo">Interrapidísimo</option>
+          <option value="Coordinadora">Coordinadora</option>
+          <option value="Envía">Envía</option>
+          <option value="TCC">TCC</option>
+          <option value="Servientrega">Servientrega</option>
+        </select>
+      </div>
+      <div class="f wide"><label>Dirección de entrega</label><textarea id="direccion" placeholder="Carrera 33 A # D30 - 28, barrio..."></textarea></div>
+      <div class="linkline" id="linkline"></div>
+    </div>
+    <div class="ocr">
+      <div class="oh"><span class="ot">📸 Leer capturas (opcional)</span><button class="btn ghost" id="ocrClear" style="display:none">✕ Quitar</button></div>
+      <div class="drop" id="drop">Arrastra, pega (Ctrl+V) o <b>haz clic</b> para subir hasta 3 capturas.<br>Se leen aquí mismo y llenan los datos que se puedan (guía, transportadora, dirección, valor).</div>
+      <input type="file" id="ocrInput" accept="image/*" multiple style="display:none">
+      <div class="thumbs" id="thumbs"></div>
+      <div class="bar" id="ocrBar"><i></i></div>
+      <div class="status" id="ocrStatus"></div>
+      <div class="raw" id="ocrRawWrap"><label>Texto detectado (revísalo y completa lo que falte):</label><textarea id="ocrRaw" readonly></textarea></div>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <div class="row">
+      <div class="search">
+        <span class="ic">🔎</span>
+        <input id="search" placeholder="Buscar plantilla (ej: reparto, guía, devolución)…">
+      </div>
+      <div class="saludo"><span>Saludo:</span><select id="saludo">
+        <option value="Hola">Hola</option>
+        <option value="Buenos días">Buenos días</option>
+        <option value="Buenas tardes">Buenas tardes</option>
+        <option value="Buenas noches">Buenas noches</option>
+        <option value="auto">Automático (según la hora)</option>
+      </select></div>
+    </div>
+    <div class="cats" id="cats"></div>
+  </div>
+
+  <main class="cards" id="cards"></main>
+  <div class="empty" id="empty" style="display:none">No hay plantillas que coincidan con tu búsqueda.</div>
+</div>
+<div class="toast" id="toast">✓ Copiado</div>
+
+<script>
+(function(){
+  var TLINKS={
+    'Interrapidísimo':'https://interrapidisimo.com/sigue-tu-envio/',
+    'Coordinadora':'https://coordinadora.com/rastreo/rastreo-de-guia/detalle-de-rastreo-de-guia',
+    'Envía':'https://envia.co/',
+    'TCC':'https://tcc.com.co/rastreo/',
+    'Servientrega':'https://www.servientrega.com/'
+  };
+  var FIELDS=['nombre','producto','valor','oferta','cantidad','guia','transportadora','direccion'];
+  var LABELS={nombre:'nombre',producto:'producto',valor:'precio',oferta:'oferta',cantidad:'cantidad',guia:'guía',transportadora:'transportadora',direccion:'dirección',link:'link'};
+
+  var T=[
+  {c:'Confirmación',t:'Confirmación · dirección correcta',b:
+`*¡Hola {nombre}!*
+
+Tu pedido ya está confirmado 🛍️
+Estos son los datos que tenemos registrados:
+
+ 🧾 *Producto: {producto}*
+ 💰 *Precio: {valor}* - {oferta}
+ 🔢 *Cantidad: {cantidad}*
+ 📍 Dirección de entrega: {direccion}
+
+✅ Para continuar con el despacho, por favor confirma tu pedido respondiendo este mensaje, con un: SI
+En cuanto se genere la guía, te la enviaremos para que puedas hacer el seguimiento🚚
+
+¡Gracias por tu confianza! 💫`},
+  {c:'Confirmación',t:'Confirmación · dirección equivocada',b:
+`¡Dirección fallida! 🙌
+
+Hola {nombre}
+
+Tu pedido *{producto}* ya fue registrado. 🛍️
+
+Tenemos registrada esta dirección:
+ 📍{direccion}
+
+⚠️ Sin embargo, la plataforma nos arroja un error con la dirección, por lo que te pedimos que por favor la actualices enviándonos:
+
+🏠 _(Nomenclatura completa: calle, carrera, #, barrio, conjunto, casa, edificio, apartamento)_ o te agradezco que me compartas una foto de alguna factura de servicios para validar la dirección.
+
+Apenas la confirmes, generaremos la guía de envío. 🚚`},
+  {c:'Confirmación',t:'Confirmación · alto % de devolución',b:
+`*¡Hola {nombre}!*
+
+Tu pedido ya está confirmado 🛍️
+Estos son los datos que tenemos registrados:
+
+ 🧾 *Producto: {producto}*
+ 💰 *Precio: {valor}*
+ 🔢 *Cantidad: {cantidad}*
+ 📍 Dirección de entrega: {direccion}
+
+Adicionalmente, te comentamos algo importante:
+
+Hemos visto que en pedidos anteriores se ha presentado un *porcentaje alto de devoluciones* 📦.
+
+Por eso queremos preguntarte si nos puedes contar *a qué se ha debido normalmente* y qué recomendaciones nos darías (horarios, portería, referencias, contacto, etc.) para *evitar que eso nos pase con tu pedido* y asegurar una entrega exitosa 🙌🚚.
+
+En cuanto se genere la guía, te la enviaremos para que puedas hacer el seguimiento🚚
+
+¡Gracias por tu confianza! 💫`},
+  {c:'Confirmación',t:'Confirmación · devolución + dirección equivocada',b:
+`¡Hola {nombre}!
+
+Tu pedido ya está confirmado 🛍️
+Estos son los datos que tenemos registrados:
+
+ 🧾 Producto: {producto}
+ 💰 Precio: {valor}
+ 🔢 Cantidad: {cantidad}
+ 📍 Dirección de entrega: {direccion}
+
+En cuanto se genere la guía, te la enviaremos para que puedas hacer el seguimiento🚚
+
+¡Gracias por tu confianza!
+
+Adicionalmente, te comentamos algo importante:
+
+1. La dirección que nos proporcionaste el sistema no la está aceptando ya que no cuenta con la nomenclatura completa. Si por favor me puedes especificar la dirección te lo agradezco (barrio, calle, carrera, apartamento).
+
+2. Hemos visto que en pedidos anteriores se ha presentado un *porcentaje alto de devoluciones* 📦.
+
+Por eso queremos preguntarte si nos puedes contar *a qué se ha debido normalmente* y qué recomendaciones nos darías (horarios, portería, referencias, contacto, etc.) para *evitar que eso nos pase con tu pedido* y asegurar una entrega exitosa 🙌🚚.`},
+  {c:'Envío',t:'Pedido despachado',b:
+`🚚 *Pedido despachado*
+
+Hola 😊
+
+Te informamos que tu pedido ya fue enviado y actualmente se encuentra en proceso con la transportadora.
+
+_En cuanto pase a estado de reparto, te estaremos avisando para que puedas estar pendiente de recibirlo._
+
+Gracias por tu confianza ✨`},
+  {c:'Envío',t:'Guía generada (con link de rastreo)',b:
+`*¡Tu guía de envío ha sido generada!* 📦
+
+*Número de Guía: {guia}* 🔢
+
+*Transportadora: {transportadora}*
+
+*Link de rastreo:*
+{link}
+
+Si tienes alguna pregunta o necesitas ayuda con el seguimiento, no dudes en contactarnos. Estamos aquí para ayudarte.📱
+
+¡Gracias por tu compra y por elegirnos! 🎉`},
+  {c:'Reparto',t:'En reparto · Lunes a Viernes',b:
+`📦 *Pedido en reparto* 🚚
+
+Tu pedido ya va camino a tu dirección y llegará en las próximas horas o, máximo, mañana.
+
+Por favor asegúrate de estar en casa y tener el pago disponible. 💰
+
+Si no puedes recibirlo, alguien de confianza puede hacerlo por ti. 🤝
+
+También te recomendamos estar atento al celular 📞, ya que el mensajero podría comunicarse contigo al momento de la entrega.
+
+*¡Gracias por elegirnos!* 😊`},
+  {c:'Reparto',t:'En reparto · Sábado',b:
+`📦 *Pedido en reparto* 🚚
+
+Tu pedido ya va camino a tu dirección y llegará en las próximas horas o, máximo, el lunes.
+
+Por favor asegúrate de estar en casa y tener el pago disponible. 💰
+
+Si no puedes recibirlo, alguien de confianza puede hacerlo por ti. 🤝
+
+También te recomendamos estar atento al celular 📞, ya que el mensajero podría comunicarse contigo al momento de la entrega.
+
+*¡Gracias por elegirnos!* 😊`},
+  {c:'Reparto',t:'En reparto · Domingo',b:
+`📦 *Pedido en reparto* 🚚
+
+Tu pedido ya va camino a tu dirección y llegará entre hoy y el día martes.
+
+Por favor asegúrate de estar en casa y tener el pago disponible. 💰
+
+Si no puedes recibirlo, alguien de confianza puede hacerlo por ti. 🤝
+
+También te recomendamos estar atento al celular 📞, ya que el mensajero podría comunicarse contigo al momento de la entrega.
+
+*¡Gracias por elegirnos!* 😊`},
+  {c:'Intentos',t:'Intento de entrega · hoy',b:
+`🚚 *Intento de entrega fallido*
+
+Hola, ¿cómo estás? 😊
+
+Te aviso que el día de hoy se realizó un intento de entrega y fue fallido.
+¿Tuviste algún inconveniente para recibirlo?
+
+El nuevo intento puede darse entre hoy y las próximas 48 horas.
+
+Si no puedes recibirlo, alguien de confianza puede hacerlo por ti. 🤝
+También te recomendamos estar atento al celular 📞, ya que el mensajero podría comunicarse contigo al momento de la entrega.
+
+Cualquier duda estoy pendiente.💙`},
+  {c:'Intentos',t:'Intento de entrega · ayer',b:
+`🚚 *Intento de entrega fallido*
+
+Hola, ¿cómo estás? 😊
+
+Te aviso que ayer el intento de entrega fue fallido.
+¿Tuviste algún inconveniente para recibirlo?
+
+El nuevo intento puede darse entre hoy y las próximas 48 horas.
+Si no puedes recibirlo, alguien de confianza puede hacerlo por ti. 🤝
+
+También te recomendamos estar atento al celular 📞, ya que el mensajero podría comunicarse contigo al momento de la entrega.
+
+Cualquier duda estoy pendiente.💙`},
+  {c:'Intentos',t:'2.º intento de entrega',b:
+`🚚 *2do intento de entrega fallido*
+
+La transportadora ya realizó un segundo intento de entrega de tu pedido, pero no fue posible completar la entrega.
+
+Queríamos saber si ocurrió algún inconveniente para recibirlo.
+
+Si no puedes recibirlo personalmente, alguien de confianza también puede hacerlo por ti. 🤝
+
+Te recomendamos estar pendiente del celular 📞, ya que el mensajero podría comunicarse contigo.
+
+Recuerda que si no logran entregarlo en el 3er intento, la transportadora podría iniciar el proceso de devolución.`},
+  {c:'Intentos',t:'3.er intento · Lunes a Viernes',b:
+`⚠️ *Se realizará el 3er intento de entrega de tu pedido*
+
+Hola, ¿cómo estás? 😊
+
+Queríamos informarte que la transportadora realizará un tercer y último intento de entrega en las próximas horas o mañana.
+
+Si no puedes recibirlo personalmente, alguien de confianza también puede hacerlo por ti. 🤝
+
+Te recomendamos estar pendiente del celular 📞, ya que el mensajero podría comunicarse contigo.
+
+Recuerda que si no logran entregarlo en el 3er intento, la transportadora podría iniciar el proceso de devolución.`},
+  {c:'Intentos',t:'3.er intento · Sábado',b:
+`🚚 *Se realizará el 3er intento de entrega*
+
+La transportadora realizará un tercer intento de entrega de tu pedido entre hoy y, máximo, el lunes.
+
+Si no puedes recibirlo personalmente, alguien de confianza también puede hacerlo por ti. 🤝
+
+Te recomendamos estar pendiente del celular 📞, ya que el mensajero podría comunicarse contigo.
+
+Recuerda que, si no logran completar esta entrega, la transportadora podría iniciar el proceso de devolución.`},
+  {c:'Intentos',t:'3.er intento · Domingo',b:
+`🚚 *Se realizará el 3er intento de entrega*
+
+La transportadora realizará un tercer intento de entrega de tu pedido en las próximas horas y, máximo, el martes.
+
+Si no puedes recibirlo personalmente, alguien de confianza también puede hacerlo por ti. 🤝
+
+Te recomendamos estar pendiente del celular 📞, ya que el mensajero podría comunicarse contigo.
+
+Recuerda que, si no logran completar esta entrega, la transportadora podría iniciar el proceso de devolución.`},
+  {c:'Oficina',t:'Pedido listo para reclamar en oficina',b:
+`📦 *Pedido listo para reclamar en oficina* 🏢
+
+¡Hola! 🙌 Tu pedido ya llegó a la oficina de la transportadora.
+
+Tienes un *máximo de 24 horas* para reclamarlo.
+
+Cuando lo hayas reclamado, por favor *confírmanos y envíanos una foto* 📸
+
+¡Esperamos que lo disfrutes mucho! 💛`},
+  {c:'Oficina',t:'Recordación 1 · reclamo en oficina',b:
+`📦 Te recordamos que tu pedido aún continúa disponible en oficina para ser reclamado.
+
+Hemos notado que todavía no ha sido retirado, por eso queríamos saber si has tenido algún inconveniente para pasar por él.
+
+Te recomendamos reclamarlo lo antes posible, ya que después de cierto tiempo la transportadora puede generar la devolución del pedido.
+
+Quedamos atentos para ayudarte en caso de que necesites información adicional. 🙌`},
+  {c:'Oficina',t:'Recordación 2 · reclamo en oficina',b:
+`Hola 👋
+
+Te recordamos que tu pedido está disponible para ser recogido en la oficina de la transportadora 📦
+
+Te recomendamos pasar por él lo antes posible para evitar que se genere la devolución.
+
+Cualquier duda, estamos atentos.`},
+  {c:'Otros',t:'Carrito abandonado',b:
+`👋 Hola {nombre}, ¿cómo estás?
+Te habla Sofía de *GlowShop* 🛍️
+
+Tenemos un pedido en nuestra plataforma sin completar a tu nombre:
+ 📦 *1 Und del producto {producto}.*
+
+Quisiera confirmar contigo si tuviste algún inconveniente durante el proceso de compra. 🤔
+
+Solo necesito que me confirmes por favor los datos de envío para completar tu pedido. 🚚✨
+
+*¡Gracias por tu atención!* 😊`},
+  {c:'Otros',t:'Gracias por tu compra',b:
+`Muchas gracias por tu compra y por confiar en nosotros. 🛍️💙
+
+Nos alegra saber que ya tienes el producto en tus manos.
+
+Si puedes, nos gustaría que nos compartieras una foto del producto. 📸
+
+¡Que lo disfrutes! 💙`},
+  {c:'Otros',t:'Pedido demorado (1)',b:
+`📦 *Tu pedido sigue en camino y bajo seguimiento*
+
+¡Hola! 😊
+
+Queremos contarte que estamos *pendientes de tu pedido* y monitoreando todo el proceso.
+
+Te estaremos informando cualquier novedad y si tienes alguna pregunta estoy súper pendiente.
+
+Gracias por tu paciencia y confianza 💫`},
+  {c:'Otros',t:'Pedido demorado (2 · congestión)',b:
+`Tu pedido ha tardado un poco más de lo normal porque la transportadora ha estado congestionada estos días.
+
+Queremos pedirte un poco de paciencia mientras avanza la entrega 🙌
+
+De igual manera, estamos pendientes de tu envío y realizando seguimiento constante para que puedas recibirlo lo antes posible.
+
+Gracias por tu comprensión. 💛`}
+  ];
+
+  var CATS=['Todas','Confirmación','Envío','Reparto','Intentos','Oficina','Otros'];
+  var vals={}, curCat='Todas', query='', saludoSel='Hola';
+  var $=function(id){return document.getElementById(id);};
+
+  // load state
+  try{ vals=JSON.parse(localStorage.getItem('gs_vals')||'{}'); }catch(e){ vals={}; }
+  saludoSel=localStorage.getItem('gs_saludo')||'Hola';
+  FIELDS.forEach(function(k){ if(vals[k]!==undefined) $(k).value=vals[k]; });
+  $('saludo').value=saludoSel;
+
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function saludo(){var h=new Date().getHours();return h<12?'Buenos días':(h<19?'Buenas tardes':'Buenas noches');}
+
+  function build(body){
+    var plain=body, html=esc(body);
+    var g=saludoSel; if(g==='auto') g=saludo();
+    if(g && g!=='Hola'){
+      plain=plain.replace(/Hola/g,g);
+      html=html.replace(/Hola/g,'<span class="v">'+g+'</span>');
+    }
+    var map={};
+    FIELDS.forEach(function(k){map[k]=(vals[k]||'').trim();});
+    map.transportadora=(vals.transportadora||'').trim();
+    map.link=TLINKS[map.transportadora]||'';
+    ['nombre','producto','valor','oferta','cantidad','guia','transportadora','link','direccion'].forEach(function(k){
+      var tok='{'+k+'}', v=map[k];
+      if(v){ plain=plain.split(tok).join(v); html=html.split(tok).join('<span class="v">'+esc(v)+'</span>'); }
+      else { plain=plain.split(tok).join('‹'+LABELS[k]+'›'); html=html.split(tok).join('<span class="miss">‹'+LABELS[k]+'›</span>'); }
+    });
+    return {plain:plain,html:html};
+  }
+
+  function render(){
+    var host=$('cards'); host.innerHTML='';
+    var q=query.toLowerCase(), shown=0;
+    T.forEach(function(tp){
+      if(curCat!=='Todas' && tp.c!==curCat) return;
+      var r=build(tp.b);
+      if(q && (tp.t+' '+r.plain).toLowerCase().indexOf(q)<0) return;
+      shown++;
+      var card=document.createElement('div'); card.className='tcard';
+      var th=document.createElement('div'); th.className='th';
+      th.innerHTML='<span class="tt">'+esc(tp.t)+'</span><span class="cat">'+esc(tp.c)+'</span>';
+      var bub=document.createElement('div'); bub.className='bubble'; bub.innerHTML=r.html;
+      var btn=document.createElement('button'); btn.className='copybtn'; btn.innerHTML='📋 Copiar';
+      btn.addEventListener('click',function(){ copy(r.plain,btn); });
+      card.appendChild(th); card.appendChild(bub); card.appendChild(btn);
+      host.appendChild(card);
+    });
+    $('empty').style.display=shown?'none':'block';
+  }
+
+  function copy(text,btn){
+    var done=function(){ btn.classList.add('done'); btn.innerHTML='✓ Copiado'; toast();
+      setTimeout(function(){btn.classList.remove('done');btn.innerHTML='📋 Copiar';},1400); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done,function(){fallback(text);done();});
+    } else { fallback(text); done(); }
+  }
+  function fallback(text){var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity=0;
+    document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);}
+  var toTimer;
+  function toast(){var t=$('toast');t.classList.add('show');clearTimeout(toTimer);toTimer=setTimeout(function(){t.classList.remove('show');},1400);}
+
+  function linkline(){
+    var t=(vals.transportadora||'').trim(); var el=$('linkline');
+    if(t && TLINKS[t]){ el.innerHTML='🔗 Link de rastreo: <a href="'+TLINKS[t]+'" target="_blank" rel="noopener">'+TLINKS[t]+'</a>'; }
+    else { el.innerHTML=''; }
+  }
+
+  // cats
+  var catHost=$('cats');
+  CATS.forEach(function(c){
+    var b=document.createElement('button'); b.className='chip'+(c===curCat?' on':''); b.textContent=c;
+    b.addEventListener('click',function(){ curCat=c; [].forEach.call(catHost.children,function(x){x.classList.remove('on');}); b.classList.add('on'); render(); });
+    catHost.appendChild(b);
+  });
+
+  // inputs
+  FIELDS.forEach(function(k){
+    $(k).addEventListener('input',function(){ vals[k]=this.value; localStorage.setItem('gs_vals',JSON.stringify(vals)); if(k==='transportadora')linkline(); render(); });
+  });
+  $('transportadora').addEventListener('change',function(){ vals.transportadora=this.value; localStorage.setItem('gs_vals',JSON.stringify(vals)); linkline(); render(); });
+  $('saludo').addEventListener('change',function(){ saludoSel=this.value; localStorage.setItem('gs_saludo',saludoSel); render(); });
+  $('search').addEventListener('input',function(){ query=this.value; render(); });
+  $('clear').addEventListener('click',function(){ vals={}; localStorage.removeItem('gs_vals'); FIELDS.forEach(function(k){$(k).value='';}); linkline(); render(); });
+
+  // ===== Lector de capturas (OCR con Tesseract, en el navegador) =====
+  var ocrFiles=[], drop=$('drop'), oinput=$('ocrInput'), thumbs=$('thumbs');
+  drop.addEventListener('click',function(){ oinput.click(); });
+  ['dragover','dragenter'].forEach(function(e){drop.addEventListener(e,function(ev){ev.preventDefault();drop.classList.add('over');});});
+  ['dragleave','drop'].forEach(function(e){drop.addEventListener(e,function(ev){ev.preventDefault();drop.classList.remove('over');});});
+  drop.addEventListener('drop',function(ev){ handleFiles(ev.dataTransfer.files); });
+  oinput.addEventListener('change',function(){ handleFiles(this.files); this.value=''; });
+  document.addEventListener('paste',function(ev){ if(ev.clipboardData&&ev.clipboardData.files&&ev.clipboardData.files.length) handleFiles(ev.clipboardData.files); });
+  $('ocrClear').addEventListener('click',function(){ ocrFiles=[]; renderThumbs(); $('ocrRawWrap').classList.remove('on'); $('ocrStatus').textContent=''; });
+  function handleFiles(list){
+    [].slice.call(list).forEach(function(f){ if(f.type.indexOf('image')===0 && ocrFiles.length<3){ ocrFiles.push({file:f,url:URL.createObjectURL(f)}); } });
+    renderThumbs(); if(ocrFiles.length) runOCR();
+  }
+  function renderThumbs(){
+    thumbs.innerHTML='';
+    ocrFiles.forEach(function(f,i){
+      var d=document.createElement('div'); d.className='thumb';
+      d.innerHTML='<img src="'+f.url+'" alt=""><button title="Quitar">✕</button>';
+      d.querySelector('button').addEventListener('click',function(){ ocrFiles.splice(i,1); renderThumbs(); });
+      thumbs.appendChild(d);
+    });
+    $('ocrClear').style.display=ocrFiles.length?'':'none';
+  }
+  function runOCR(){
+    if(typeof Tesseract==='undefined'){ $('ocrStatus').textContent='No se pudo cargar el lector (revisa tu conexión a internet).'; return; }
+    var bar=$('ocrBar'), fill=bar.querySelector('i'), st=$('ocrStatus');
+    bar.classList.add('on'); st.textContent='Leyendo capturas… (la primera vez tarda un poco)'; fill.style.width='4%';
+    var texts=[], done=0;
+    ocrFiles.reduce(function(p,f){
+      return p.then(function(){
+        return Tesseract.recognize(f.url,'spa',{logger:function(m){ if(m.status==='recognizing text') fill.style.width=Math.round(((done+m.progress)/ocrFiles.length)*100)+'%'; }})
+          .then(function(r){ texts.push(r.data.text); done++; });
+      });
+    }, Promise.resolve()).then(function(){
+      fill.style.width='100%'; setTimeout(function(){bar.classList.remove('on');},400);
+      var all=texts.join('\n');
+      $('ocrRaw').value=all; $('ocrRawWrap').classList.add('on');
+      var found=parseInfo(all);
+      st.textContent=found.length? ('✓ Detecté: '+found.join(', ')+'. Revisa y completa lo que falte.') : 'Listo. Revisa el texto detectado abajo y completa los campos.';
+    }).catch(function(){ bar.classList.remove('on'); st.textContent='No se pudo leer la imagen. Prueba con una captura más nítida.'; });
+  }
+  function setVal(k,v){ if(!v) return false; v=(''+v).trim(); vals[k]=v; $(k).value=v; localStorage.setItem('gs_vals',JSON.stringify(vals)); return true; }
+  function parseInfo(t){
+    var got=[];
+    var digits=(t.match(/\d[\d ]{7,}\d/g)||[]).map(function(s){return s.replace(/\D/g,'');}).filter(function(s){return s.length>=9&&s.length<=15;});
+    if(digits.length && setVal('guia',digits.sort(function(a,b){return b.length-a.length;})[0])) got.push('guía');
+    var low=t.toLowerCase();
+    var TR={'interrapidisimo':'Interrapidísimo','inter rapidisimo':'Interrapidísimo','coordinadora':'Coordinadora','servientrega':'Servientrega','envia':'Envía','tcc':'TCC'};
+    for(var key in TR){ if(low.indexOf(key)>=0){ vals.transportadora=TR[key]; $('transportadora').value=TR[key]; localStorage.setItem('gs_vals',JSON.stringify(vals)); linkline(); got.push('transportadora'); break; } }
+    var mv=t.match(/\$\s?([\d][\d.,]{3,})/); if(mv && setVal('valor',mv[1].replace(/[.,]+$/,''))) got.push('precio');
+    var lines=t.split(/\n/).map(function(s){return s.trim();}).filter(Boolean);
+    for(var i=0;i<lines.length;i++){ if(/^(calle|carrera|cra\b|cll|kr\b|diagonal|transversal|avenida|av\b|manzana|mz\b)/i.test(lines[i])){ if(setVal('direccion',lines[i])) got.push('dirección'); break; } }
+    render();
+    return got;
+  }
+
+  linkline(); render();
+})();
+</script>
+</body>
+</html>
