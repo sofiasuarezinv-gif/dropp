@@ -143,6 +143,7 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-heigh
     </div>
     <div class="grid">
       <div class="f"><label>Nombre</label><input id="nombre" placeholder="Nombre del cliente"></div>
+      <div class="f"><label>Teléfono</label><input id="telefono" placeholder="Número del cliente" inputmode="numeric"></div>
       <div class="f"><label>Producto</label><input id="producto" placeholder="Nombre del producto"></div>
       <div class="f"><label>Precio</label><input id="valor" placeholder="89.900"></div>
       <div class="f"><label>Oferta</label><input id="oferta" placeholder="30% OFF"></div>
@@ -203,8 +204,8 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-heigh
     'TCC':'https://tcc.com.co/rastreo/',
     'Servientrega':'https://www.servientrega.com/'
   };
-  var FIELDS=['nombre','producto','valor','oferta','cantidad','guia','transportadora','direccion'];
-  var LABELS={nombre:'nombre',producto:'producto',valor:'precio',oferta:'oferta',cantidad:'cantidad',guia:'guía',transportadora:'transportadora',direccion:'dirección',link:'link'};
+  var FIELDS=['nombre','telefono','producto','valor','oferta','cantidad','guia','transportadora','direccion'];
+  var LABELS={nombre:'nombre',telefono:'teléfono',producto:'producto',valor:'precio',oferta:'oferta',cantidad:'cantidad',guia:'guía',transportadora:'transportadora',direccion:'dirección',link:'link'};
 
   var T=[
   {c:'Confirmación',t:'Confirmación · dirección correcta',b:
@@ -607,14 +608,45 @@ Gracias por tu comprensión. 💛`}
   function setVal(k,v){ if(!v) return false; v=(''+v).trim(); vals[k]=v; $(k).value=v; localStorage.setItem('gs_vals',JSON.stringify(vals)); return true; }
   function parseInfo(t){
     var got=[];
-    var digits=(t.match(/\d[\d ]{7,}\d/g)||[]).map(function(s){return s.replace(/\D/g,'');}).filter(function(s){return s.length>=9&&s.length<=15;});
-    if(digits.length && setVal('guia',digits.sort(function(a,b){return b.length-a.length;})[0])) got.push('guía');
+    var lines=t.split(/\n/).map(function(s){return s.trim();}).filter(Boolean);
     var low=t.toLowerCase();
+    var addrRe=/(calle|carrera|\bcra\b|\bcll\b|\bkr\b|diagonal|transv|avenida|\bav\b|manzana|\bmz\b|conjunto|torre|apto|barrio|no\s*\d|#\s*\d)/i;
+    // Nombre (línea tras "ORDEN PARA")
+    var iOP=-1; for(var a=0;a<lines.length;a++){ if(/orden\s*para/i.test(lines[a])){ iOP=a; break; } }
+    if(iOP>=0){
+      var nm=lines[iOP].replace(/.*orden\s*para\s*:?/i,'').trim();
+      if(!nm && lines[iOP+1]) nm=lines[iOP+1];
+      if(nm && /[a-záéíóúñ]/i.test(nm) && nm.length>3 && !addrRe.test(nm) && setVal('nombre',nm)) got.push('nombre');
+      for(var k=iOP+1;k<Math.min(iOP+5,lines.length);k++){
+        if(lines[k]===vals.nombre) continue;
+        if(addrRe.test(lines[k])){ if(setVal('direccion',lines[k])) got.push('dirección'); break; }
+      }
+    }
+    if(!vals.direccion){ for(var i=0;i<lines.length;i++){ if(addrRe.test(lines[i]) && lines[i].length>10){ if(setVal('direccion',lines[i])) got.push('dirección'); break; } } }
+    // Teléfono
+    var mt=t.match(/tel[eéf.\s:]*[:]?\s*(3\d[\d ]{7,}\d)/i)||t.match(/\b(3\d{9})\b/);
+    if(mt && setVal('telefono',mt[1].replace(/\D/g,''))) got.push('teléfono');
+    // Guía
+    var mgu=t.match(/gu[ií]a[^0-9]{0,12}(\d[\d ]{7,}\d)/i);
+    var guia=mgu?mgu[1].replace(/\D/g,''):null;
+    if(!guia){ var digs=(t.match(/\d[\d ]{9,}\d/g)||[]).map(function(s){return s.replace(/\D/g,'');}).filter(function(s){return s.length>=10&&s.length<=15;}); if(digs.length) guia=digs.sort(function(a,b){return b.length-a.length;})[0]; }
+    if(guia && guia!==vals.telefono && setVal('guia',guia)) got.push('guía');
+    // Transportadora
     var TR={'interrapidisimo':'Interrapidísimo','inter rapidisimo':'Interrapidísimo','coordinadora':'Coordinadora','servientrega':'Servientrega','envia':'Envía','tcc':'TCC'};
     for(var key in TR){ if(low.indexOf(key)>=0){ vals.transportadora=TR[key]; $('transportadora').value=TR[key]; localStorage.setItem('gs_vals',JSON.stringify(vals)); linkline(); got.push('transportadora'); break; } }
-    var mv=t.match(/\$\s?([\d][\d.,]{3,})/); if(mv && setVal('valor',mv[1].replace(/[.,]+$/,''))) got.push('precio');
-    var lines=t.split(/\n/).map(function(s){return s.trim();}).filter(Boolean);
-    for(var i=0;i<lines.length;i++){ if(/^(calle|carrera|cra\b|cll|kr\b|diagonal|transversal|avenida|av\b|manzana|mz\b)/i.test(lines[i])){ if(setVal('direccion',lines[i])) got.push('dirección'); break; } }
+    // Producto ("<id> - descripción")
+    var mp=t.match(/\d{4,}\s*[-–]\s*([A-Za-zÁÉÍÓÚÑáéíóúñ][^\n]{3,90})/);
+    if(mp){ var prod=mp[1].split(/\s+\$/)[0].trim(); if(setVal('producto',prod)) got.push('producto'); }
+    // Precio (Total Orden, o el mayor $)
+    var mto=t.match(/total\s*orden[^0-9]*([\d.]{3,})/i);
+    var precio=null;
+    if(mto){ precio=mto[1].replace(/[.,]+$/,''); }
+    else { var money=(t.match(/\$\s?\d[\d.]{2,}/g)||[]).map(function(s){return parseInt(s.replace(/\D/g,''),10);}).filter(function(n){return n>=1000;}); if(money.length) precio=money.sort(function(a,b){return b-a;})[0].toLocaleString('es-CO'); }
+    if(precio && setVal('valor',(''+precio).replace(/[^\d.]/g,''))) got.push('precio');
+    // Cantidad
+    var mc=t.match(/\$\s?[\d.]+\s+\$\s?[\d.]+\s+(\d{1,2})\s+\$/);
+    if(mc && setVal('cantidad',mc[1])) got.push('cantidad');
+    else if(vals.producto && !vals.cantidad){ setVal('cantidad','1'); }
     render();
     return got;
   }
