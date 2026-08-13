@@ -544,7 +544,23 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
   var editingKey=null;
   function tkey(tp){ return tp.c+'|'+tp.t; }
   function tbody(tp){ var k=tkey(tp); return (TOVR[k]!=null)?TOVR[k]:tp.b; }
-  function saveOvr(){ try{ localStorage.setItem('dropp_ovr',JSON.stringify(TOVR)); }catch(e){} }
+  // Guardado PERMANENTE + compartido: se guarda en el backend de productos (GitHub) y también local (cache/instantáneo).
+  var DP_API='https://an-lisis-producto.onrender.com/api/dropp_copys';
+  var _ovrPid=null, _pushing=false, _pushAgain=false;
+  function saveOvr(){ try{ localStorage.setItem('dropp_ovr',JSON.stringify(TOVR)); }catch(e){} _pushOvr(); }
+  function _pushOvr(){
+    if(_pushing){ _pushAgain=true; return; }
+    _pushing=true;
+    var body=JSON.stringify({data:{ovr:TOVR}});
+    var done=function(){ _pushing=false; if(_pushAgain){ _pushAgain=false; _pushOvr(); } };
+    if(_ovrPid){ fetch(DP_API+'/'+encodeURIComponent(_ovrPid),{method:'PUT',headers:{'Content-Type':'application/json'},body:body}).then(done,done); }
+    else { fetch(DP_API,{method:'POST',headers:{'Content-Type':'application/json'},body:body}).then(function(r){return r.json();}).then(function(o){ if(o&&o.pid)_ovrPid=o.pid; done(); },done); }
+  }
+  function loadOvr(){
+    fetch(DP_API).then(function(r){return r.json();}).then(function(arr){
+      if(Array.isArray(arr) && arr.length){ _ovrPid=arr[0].pid; if(arr[0].ovr && typeof arr[0].ovr==='object'){ TOVR=arr[0].ovr; try{ localStorage.setItem('dropp_ovr',JSON.stringify(TOVR)); }catch(e){} if(editingKey===null) render(); } }
+    }).catch(function(){});
+  }
 
   function render(){
     var host=$('cards'); host.innerHTML='';
@@ -718,7 +734,7 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
     return got;
   }
 
-  linkline(); render();
+  linkline(); render(); loadOvr();
 })();
 </script>
 </body>
