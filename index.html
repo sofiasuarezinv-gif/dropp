@@ -539,21 +539,54 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
     return {plain:plain,html:html};
   }
 
+  // Ediciones de copys guardadas en el navegador (sobreescriben el texto por defecto)
+  var TOVR; try{ TOVR=JSON.parse(localStorage.getItem('dropp_ovr')||'{}'); }catch(e){ TOVR={}; }
+  var editingKey=null;
+  function tkey(tp){ return tp.c+'|'+tp.t; }
+  function tbody(tp){ var k=tkey(tp); return (TOVR[k]!=null)?TOVR[k]:tp.b; }
+  function saveOvr(){ try{ localStorage.setItem('dropp_ovr',JSON.stringify(TOVR)); }catch(e){} }
+
   function render(){
     var host=$('cards'); host.innerHTML='';
     var q=query.toLowerCase(), shown=0;
     T.forEach(function(tp){
       if(curCat!=='Todas' && tp.c!==curCat) return;
-      var r=build(tp.b);
+      var body=tbody(tp), r=build(body);
       if(q && (tp.t+' '+r.plain).toLowerCase().indexOf(q)<0) return;
       shown++;
       var card=document.createElement('div'); card.className='tcard';
       var th=document.createElement('div'); th.className='th';
       th.innerHTML='<span class="tt">'+esc(tp.t)+'</span><span class="cat">'+esc(tp.c)+'</span>';
-      var bub=document.createElement('div'); bub.className='bubble'; bub.innerHTML=r.html;
-      var btn=document.createElement('button'); btn.className='copybtn'; btn.innerHTML='📋 Copiar';
-      btn.addEventListener('click',function(){ copy(r.plain,btn); });
-      card.appendChild(th); card.appendChild(bub); card.appendChild(btn);
+      card.appendChild(th);
+      if(editingKey===tkey(tp)){
+        var ta=document.createElement('textarea');
+        ta.style.cssText='width:100%;min-height:180px;background:var(--bubble);border:1px solid var(--bubble-line);border-radius:12px;color:var(--ink);padding:12px 14px;font-family:var(--sans);font-size:13.5px;line-height:1.55;resize:vertical;outline:none;box-sizing:border-box';
+        ta.value=body;
+        var hint=document.createElement('div'); hint.style.cssText='font-size:11.5px;color:var(--muted);margin:7px 2px 0';
+        hint.textContent='Podés usar {nombre}, {producto}, {guia}, {saludo}, {idprod}, {valor}… se reemplazan solos.';
+        var row=document.createElement('div'); row.style.cssText='display:flex;gap:8px;margin-top:11px;flex-wrap:wrap';
+        var save=document.createElement('button'); save.className='copybtn'; save.innerHTML='💾 Guardar';
+        save.addEventListener('click',function(){ TOVR[tkey(tp)]=ta.value; saveOvr(); editingKey=null; render(); });
+        var cancel=document.createElement('button'); cancel.className='btn'; cancel.textContent='Cancelar';
+        cancel.addEventListener('click',function(){ editingKey=null; render(); });
+        row.appendChild(save); row.appendChild(cancel);
+        if(TOVR[tkey(tp)]!=null){
+          var rst=document.createElement('button'); rst.className='btn'; rst.textContent='↩️ Restaurar original';
+          rst.addEventListener('click',function(){ delete TOVR[tkey(tp)]; saveOvr(); editingKey=null; render(); });
+          row.appendChild(rst);
+        }
+        card.appendChild(ta); card.appendChild(hint); card.appendChild(row);
+      } else {
+        var bub=document.createElement('div'); bub.className='bubble'; bub.innerHTML=r.html;
+        var actions=document.createElement('div'); actions.style.cssText='display:flex;gap:8px;align-items:center';
+        var btn=document.createElement('button'); btn.className='copybtn'; btn.innerHTML='📋 Copiar';
+        btn.addEventListener('click',function(){ copy(r.plain,btn); });
+        var edit=document.createElement('button'); edit.className='btn'; edit.innerHTML='✏️ Editar';
+        edit.addEventListener('click',function(){ editingKey=tkey(tp); render(); });
+        actions.appendChild(btn); actions.appendChild(edit);
+        if(TOVR[tkey(tp)]!=null){ var tag=document.createElement('span'); tag.style.cssText='font-size:10.5px;color:var(--green);font-weight:800;margin-left:auto'; tag.textContent='✏️ editado'; actions.appendChild(tag); }
+        card.appendChild(bub); card.appendChild(actions);
+      }
       host.appendChild(card);
     });
     $('empty').style.display=shown?'none':'block';
