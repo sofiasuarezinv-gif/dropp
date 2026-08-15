@@ -131,79 +131,40 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-heigh
 .ocr .raw label{font-size:11.5px;color:var(--muted);font-weight:600}
 .ocr .raw textarea{width:100%;min-height:80px;margin-top:5px;border:1px solid var(--line);border-radius:10px;
   background:var(--paper);color:var(--ink);font-size:12.5px;padding:9px;font-family:var(--sans);resize:vertical}
+/* navegación: carpetas e items */
+.crumbs{display:flex;align-items:center;gap:8px;margin-top:18px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.crumbs a{color:var(--green);cursor:pointer;text-decoration:none;font-weight:600}
+.crumbs a:hover{color:var(--green-2)}
+.crumbs .sep{opacity:.45}
+.folders{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
+.folder{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:26px 22px;cursor:pointer;transition:.16s;display:flex;flex-direction:column;gap:8px}
+.folder:hover{border-color:var(--green);transform:translateY(-2px)}
+.folder .fic{font-size:40px;line-height:1}
+.folder .fn{font-size:18px;font-weight:800;letter-spacing:-.01em}
+.folder .fd{font-size:13px;color:var(--muted)}
+.folder .fcount{font-size:12px;color:var(--green);font-weight:700;margin-top:4px}
+.items{display:grid;grid-template-columns:1fr;gap:12px;margin-top:18px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:16px 18px;cursor:pointer;transition:.16s;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.item:hover{border-color:var(--green);transform:translateY(-2px)}
+.item .in{font-size:14.5px;font-weight:700}
+.item .ic2{font-size:11px;color:var(--green);background:var(--green-soft);padding:3px 9px;border-radius:999px;font-weight:700;flex-shrink:0}
+@media(min-width:680px){.folders{grid-template-columns:1fr 1fr}.items{grid-template-columns:1fr 1fr 1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="brand">
+  <header class="brand" id="brand" style="cursor:pointer" title="Volver al inicio">
     <div class="logo">💬</div>
     <div>
       <h1>Plantillas WhatsApp · GlowShop</h1>
-      <div class="sub">Escribe los datos una vez y copia cada mensaje con un clic.</div>
+      <div class="sub">Elige una carpeta, abre el mensaje y copia con un clic.</div>
     </div>
   </header>
 
-  <section class="panel">
-    <div class="ph">
-      <span class="t">Datos del pedido</span>
-      <button class="btn ghost" id="clear">✕ Limpiar</button>
-    </div>
-    <div class="grid">
-      <div class="f"><label>Nombre</label><input id="nombre" placeholder="Nombre del cliente"></div>
-      <div class="f"><label>Teléfono</label><input id="telefono" placeholder="Número del cliente" inputmode="numeric"></div>
-      <div class="f"><label>Producto</label><input id="producto" placeholder="Nombre del producto"></div>
-      <div class="f"><label>ID producto <span style="opacity:.6">(Dropi)</span></label><input id="idprod" placeholder="Pega el ID del producto"></div>
-      <div class="f"><label>Precio</label><input id="valor" placeholder="89.900"></div>
-      <div class="f"><label>Oferta</label><input id="oferta" placeholder="30% OFF"></div>
-      <div class="f"><label>Cantidad</label><input id="cantidad" placeholder="1"></div>
-      <div class="f"><label>N.º de guía</label><input id="guia" placeholder="240054343807"></div>
-      <div class="f"><label>Transportadora</label>
-        <select id="transportadora">
-          <option value="">— Seleccionar —</option>
-          <option value="Interrapidísimo">Interrapidísimo</option>
-          <option value="Coordinadora">Coordinadora</option>
-          <option value="Envía">Envía</option>
-          <option value="TCC">TCC</option>
-          <option value="Servientrega">Servientrega</option>
-        </select>
-      </div>
-      <div class="f wide"><label>Dirección de entrega</label><textarea id="direccion" placeholder="Carrera 33 A # D30 - 28, barrio..."></textarea></div>
-      <div class="linkline" id="linkline"></div>
-    </div>
-    <div class="ocr">
-      <div class="oh"><span class="ot">📸 Leer capturas (opcional)</span><button class="btn ghost" id="ocrClear" style="display:none">✕ Quitar</button></div>
-      <div class="drop" id="drop">Arrastra, pega (Ctrl+V) o <b>haz clic</b> para subir hasta 3 capturas.<br>Se leen aquí mismo y llenan los datos que se puedan (guía, transportadora, dirección, valor).</div>
-      <input type="file" id="ocrInput" accept="image/*" multiple style="display:none">
-      <div class="thumbs" id="thumbs"></div>
-      <div class="bar" id="ocrBar"><i></i></div>
-      <div class="status" id="ocrStatus"></div>
-      <div class="raw" id="ocrRawWrap"><label>Texto detectado (revísalo y completa lo que falte):</label><textarea id="ocrRaw" readonly></textarea></div>
-    </div>
-  </section>
-
-  <div class="toolbar">
-    <div class="row">
-      <div class="search">
-        <span class="ic">🔎</span>
-        <input id="search" placeholder="Buscar plantilla (ej: reparto, guía, devolución)…">
-      </div>
-      <div class="saludo"><span>Saludo:</span><select id="saludo">
-        <option value="Hola">Hola</option>
-        <option value="Buenos días">Buenos días</option>
-        <option value="Buenas tardes">Buenas tardes</option>
-        <option value="Buenas noches">Buenas noches</option>
-        <option value="auto">Automático (según la hora)</option>
-      </select></div>
-    </div>
-    <div class="catsrow">
-      <button class="catnav" id="catprev" title="Mover a la izquierda">◀</button>
-      <div class="cats" id="cats"></div>
-      <button class="catnav" id="catnext" title="Mover a la derecha">▶</button>
-    </div>
-  </div>
-
-  <main class="cards" id="cards"></main>
-  <div class="empty" id="empty" style="display:none">No hay plantillas que coincidan con tu búsqueda.</div>
+  <div id="crumbs" class="crumbs"></div>
+  <div id="app"></div>
 </div>
 <div class="toast" id="toast">✓ Copiado</div>
 
@@ -504,15 +465,35 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
 ✅ ¿Con qué transportadoras trabajan?`}
   ];
 
-  var CATS=['Confirmación','Guía generada','Pedido despachado','Reparto','Intento de entrega','Reclamo en oficina','Pedido demorado','Carrito abandonado','Gracias por tu compra','Mensaje a proveedores'];
-  var vals={}, curCat='Confirmación', query='', saludoSel='Hola';
+  var vals={}, saludoSel='Hola';
   var $=function(id){return document.getElementById(id);};
-
-  // load state
   try{ vals=JSON.parse(localStorage.getItem('gs_vals')||'{}'); }catch(e){ vals={}; }
   saludoSel=localStorage.getItem('gs_saludo')||'Hola';
-  FIELDS.forEach(function(k){ if(vals[k]!==undefined) $(k).value=vals[k]; });
-  $('saludo').value=saludoSel;
+  function save(){ localStorage.setItem('gs_vals',JSON.stringify(vals)); }
+
+  // Carpetas → items → plantillas
+  var FOLDERS=[
+    {id:'pedidos', icon:'📦', name:'COPYS PEDIDOS', desc:'Mensajes para tus clientes según el estado del pedido',
+     cats:['Confirmación','Guía generada','Pedido despachado','Reparto','Intento de entrega','Reclamo en oficina','Pedido demorado','Carrito abandonado','Gracias por tu compra']},
+    {id:'proveedores', icon:'🏭', name:'MENSAJES PROVEEDORES', desc:'Mensajes para tus proveedores en Dropi',
+     cats:['Mensaje a proveedores']}
+  ];
+  var CAT_ICON={'Confirmación':'✅','Guía generada':'🔖','Pedido despachado':'🚚','Reparto':'📦','Intento de entrega':'🔁','Reclamo en oficina':'🏢','Pedido demorado':'⏳','Carrito abandonado':'🛒','Gracias por tu compra':'💛','Mensaje a proveedores':'🏭','Confirmar stock':'📦','Información básica':'📋'};
+  var FIELD_DEFS={
+    nombre:{label:'Nombre',ph:'Nombre del cliente'},
+    telefono:{label:'Teléfono',ph:'Número del cliente',mode:'numeric'},
+    producto:{label:'Producto',ph:'Nombre del producto'},
+    idprod:{label:'ID producto (Dropi)',ph:'Pega el ID del producto'},
+    valor:{label:'Precio',ph:'89.900'},
+    oferta:{label:'Oferta',ph:'30% OFF'},
+    cantidad:{label:'Cantidad',ph:'1'},
+    guia:{label:'N.º de guía',ph:'240054343807'},
+    transportadora:{label:'Transportadora',type:'select'},
+    direccion:{label:'Dirección de entrega',ph:'Carrera 33 A # D30 - 28, barrio...',type:'textarea'}
+  };
+  var TOKEN2FIELD={nombre:'nombre',producto:'producto',valor:'valor',oferta:'oferta',cantidad:'cantidad',guia:'guia',transportadora:'transportadora',link:'transportadora',direccion:'direccion',idprod:'idprod'};
+  var FIELD_ORDER=['nombre','telefono','producto','idprod','valor','oferta','cantidad','guia','transportadora','direccion'];
+  var nav={view:'home',folderId:null}, curTpls=[], curItem=null, ocrFiles=[], curItems=[];
 
   function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
   function saludo(){var h=new Date().getHours();return h<12?'Buenos días':(h<19?'Buenas tardes':'Buenas noches');}
@@ -558,18 +539,88 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
   }
   function loadOvr(){
     fetch(DP_API).then(function(r){return r.json();}).then(function(arr){
-      if(Array.isArray(arr) && arr.length){ _ovrPid=arr[0].pid; if(arr[0].ovr && typeof arr[0].ovr==='object'){ TOVR=arr[0].ovr; try{ localStorage.setItem('dropp_ovr',JSON.stringify(TOVR)); }catch(e){} if(editingKey===null) render(); } }
+      if(Array.isArray(arr) && arr.length){ _ovrPid=arr[0].pid; if(arr[0].ovr && typeof arr[0].ovr==='object'){ TOVR=arr[0].ovr; try{ localStorage.setItem('dropp_ovr',JSON.stringify(TOVR)); }catch(e){} if(editingKey===null && nav.view==='item') renderCards(); } }
     }).catch(function(){});
   }
 
-  function render(){
-    var host=$('cards'); host.innerHTML='';
-    var q=query.toLowerCase(), shown=0;
-    T.forEach(function(tp){
-      if(curCat!=='Todas' && tp.c!==curCat) return;
+  function escAttr(s){ return esc(''+s).replace(/"/g,'&quot;'); }
+  function fieldsForTpls(tpls){
+    var set={}, needSaludo=false, tokRe=/\{(\w+)\}/g;
+    tpls.forEach(function(tp){ var bd=tbody(tp); var m; tokRe.lastIndex=0; while((m=tokRe.exec(bd))){ var f=TOKEN2FIELD[m[1]]; if(f) set[f]=1; if(m[1]==='saludo') needSaludo=true; } if(/\bHola\b/.test(bd)) needSaludo=true; });
+    return {fields:FIELD_ORDER.filter(function(f){return set[f];}), saludo:needSaludo};
+  }
+  function fieldInput(k){
+    var d=FIELD_DEFS[k], v=vals[k]||'';
+    if(d.type==='select'){ var opts='<option value="">— Seleccionar —</option>'; ['Interrapidísimo','Coordinadora','Envía','TCC','Servientrega'].forEach(function(o){ opts+='<option value="'+o+'"'+(v===o?' selected':'')+'>'+o+'</option>'; }); return '<div class="f"><label>'+d.label+'</label><select id="'+k+'">'+opts+'</select></div>'; }
+    if(d.type==='textarea'){ return '<div class="f wide"><label>'+d.label+'</label><textarea id="'+k+'" placeholder="'+escAttr(d.ph)+'">'+esc(v)+'</textarea></div>'; }
+    return '<div class="f"><label>'+d.label+'</label><input id="'+k+'" placeholder="'+escAttr(d.ph||'')+'"'+(d.mode?' inputmode="'+d.mode+'"':'')+' value="'+escAttr(v)+'"></div>';
+  }
+  function ocrHtml(){
+    return '<div class="ocr">'+
+      '<div class="oh"><span class="ot">📸 Leer capturas (opcional)</span><button class="btn ghost" id="ocrClear" style="display:none">✕ Quitar</button></div>'+
+      '<div class="drop" id="drop">Arrastra, pega (Ctrl+V) o <b>haz clic</b> para subir hasta 3 capturas.<br>Se leen aquí mismo y llenan los datos que se puedan (guía, transportadora, dirección, valor).</div>'+
+      '<input type="file" id="ocrInput" accept="image/*" multiple style="display:none">'+
+      '<div class="thumbs" id="thumbs"></div>'+
+      '<div class="bar" id="ocrBar"><i></i></div>'+
+      '<div class="status" id="ocrStatus"></div>'+
+      '<div class="raw" id="ocrRawWrap"><label>Texto detectado (revísalo y completa lo que falte):</label><textarea id="ocrRaw" readonly></textarea></div>'+
+    '</div>';
+  }
+  // ─── Navegación: inicio → carpeta → item ───
+  function crumbs(){
+    var c=$('crumbs'); if(!c) return; var html='<a onclick="__nav(\'home\')">🏠 Inicio</a>';
+    var f=FOLDERS.filter(function(x){return x.id===nav.folderId;})[0];
+    if(nav.view!=='home' && f){ html+='<span class="sep">›</span><a onclick="__nav(\'folder\',\''+f.id+'\')">'+f.icon+' '+esc(f.name)+'</a>'; }
+    if(nav.view==='item' && curItem){ html+='<span class="sep">›</span><span>'+esc(curItem.label)+'</span>'; }
+    c.innerHTML=html;
+  }
+  function showHome(){
+    nav={view:'home',folderId:null}; curItem=null; editingKey=null; crumbs();
+    var h='<div class="folders">';
+    FOLDERS.forEach(function(f){ var n=T.filter(function(tp){return f.cats.indexOf(tp.c)>=0;}).length;
+      h+='<div class="folder" onclick="__nav(\'folder\',\''+f.id+'\')"><div class="fic">'+f.icon+'</div><div class="fn">'+esc(f.name)+'</div><div class="fd">'+esc(f.desc)+'</div><div class="fcount">'+n+' plantillas</div></div>'; });
+    h+='</div>'; $('app').innerHTML=h;
+  }
+  function itemsForFolder(f){
+    if(f.cats.length>1){ return f.cats.map(function(cat){ return {kind:'cat',folderId:f.id,cat:cat,label:cat,count:T.filter(function(tp){return tp.c===cat;}).length}; }); }
+    var items=[]; T.forEach(function(tp,i){ if(tp.c===f.cats[0]) items.push({kind:'tpl',folderId:f.id,cat:tp.c,idx:i,label:tp.t,count:1}); }); return items;
+  }
+  function showFolder(fid){
+    var f=FOLDERS.filter(function(x){return x.id===fid;})[0]; if(!f){ showHome(); return; }
+    nav={view:'folder',folderId:fid}; curItem=null; editingKey=null; crumbs();
+    curItems=itemsForFolder(f);
+    var h='<div class="items">';
+    curItems.forEach(function(it,i){ h+='<div class="item" onclick="__openItem('+i+')"><span class="in">'+(CAT_ICON[it.label]||'📄')+' '+esc(it.label)+'</span><span class="ic2">'+it.count+'</span></div>'; });
+    h+='</div>'; $('app').innerHTML=h;
+  }
+  function renderItem(it){
+    nav={view:'item',folderId:it.folderId}; curItem=it; editingKey=null;
+    curTpls = it.kind==='tpl' ? [T[it.idx]] : T.filter(function(tp){return tp.c===it.cat;});
+    var fi=fieldsForTpls(curTpls); crumbs();
+    var h='';
+    if(fi.fields.length || fi.saludo){
+      h+='<section class="panel"><div class="ph"><span class="t">Datos para este mensaje</span><button class="btn ghost" id="clear">✕ Limpiar</button></div>';
+      if(fi.fields.length){ h+='<div class="grid">'; fi.fields.forEach(function(k){ h+=fieldInput(k); }); h+='<div class="linkline" id="linkline"></div></div>'; }
+      if(fi.saludo){ h+='<div class="saludo" style="margin-top:12px"><span>Saludo:</span><select id="saludo"><option value="Hola">Hola</option><option value="Buenos días">Buenos días</option><option value="Buenas tardes">Buenas tardes</option><option value="Buenas noches">Buenas noches</option><option value="auto">Automático (según la hora)</option></select></div>'; }
+      if(fi.fields.some(function(k){return ['guia','direccion','producto','valor'].indexOf(k)>=0;})) h+=ocrHtml();
+      h+='</section>';
+    }
+    h+='<main class="cards" id="itemCards"></main>';
+    $('app').innerHTML=h;
+    if($('saludo')){ $('saludo').value=saludoSel; $('saludo').addEventListener('change',function(){ saludoSel=this.value; localStorage.setItem('gs_saludo',saludoSel); renderCards(); }); }
+    fi.fields.forEach(function(k){ var el=$(k); if(!el) return; var ev=(FIELD_DEFS[k].type==='select')?'change':'input'; el.addEventListener(ev,function(){ vals[k]=this.value; save(); if(k==='transportadora') updLink(); renderCards(); }); });
+    if($('clear')) $('clear').addEventListener('click',function(){ vals={}; save(); ocrFiles=[]; renderItem(it); });
+    updLink(); initOCR();
+    renderCards();
+  }
+  function updLink(){ var el=$('linkline'); if(!el) return; var t=(vals.transportadora||'').trim(); if(t&&TLINKS[t]){ el.innerHTML='🔗 Link de rastreo: <a href="'+TLINKS[t]+'" target="_blank" rel="noopener">'+TLINKS[t]+'</a>'; } else el.innerHTML=''; }
+  window.__nav=function(v,fid){ if(v==='home') showHome(); else if(v==='folder') showFolder(fid); };
+  window.__openItem=function(i){ var it=curItems[i]; if(it) renderItem(it); };
+
+  function renderCards(){
+    var host=$('itemCards'); if(!host) return; host.innerHTML='';
+    curTpls.forEach(function(tp){
       var body=tbody(tp), r=build(body);
-      if(q && (tp.t+' '+r.plain).toLowerCase().indexOf(q)<0) return;
-      shown++;
       var card=document.createElement('div'); card.className='tcard';
       var th=document.createElement('div'); th.className='th';
       th.innerHTML='<span class="tt">'+esc(tp.t)+'</span><span class="cat">'+esc(tp.c)+'</span>';
@@ -581,14 +632,14 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
         var hint=document.createElement('div'); hint.style.cssText='font-size:11.5px;color:var(--muted);margin:7px 2px 0';
         hint.textContent='Podés usar {nombre}, {producto}, {guia}, {saludo}, {idprod}, {valor}… se reemplazan solos.';
         var row=document.createElement('div'); row.style.cssText='display:flex;gap:8px;margin-top:11px;flex-wrap:wrap';
-        var save=document.createElement('button'); save.className='copybtn'; save.innerHTML='💾 Guardar';
-        save.addEventListener('click',function(){ TOVR[tkey(tp)]=ta.value; saveOvr(); editingKey=null; render(); });
+        var svb=document.createElement('button'); svb.className='copybtn'; svb.innerHTML='💾 Guardar';
+        svb.addEventListener('click',function(){ TOVR[tkey(tp)]=ta.value; saveOvr(); editingKey=null; renderItem(curItem); });
         var cancel=document.createElement('button'); cancel.className='btn'; cancel.textContent='Cancelar';
-        cancel.addEventListener('click',function(){ editingKey=null; render(); });
-        row.appendChild(save); row.appendChild(cancel);
+        cancel.addEventListener('click',function(){ editingKey=null; renderCards(); });
+        row.appendChild(svb); row.appendChild(cancel);
         if(TOVR[tkey(tp)]!=null){
           var rst=document.createElement('button'); rst.className='btn'; rst.textContent='↩️ Restaurar original';
-          rst.addEventListener('click',function(){ delete TOVR[tkey(tp)]; saveOvr(); editingKey=null; render(); });
+          rst.addEventListener('click',function(){ delete TOVR[tkey(tp)]; saveOvr(); editingKey=null; renderItem(curItem); });
           row.appendChild(rst);
         }
         card.appendChild(ta); card.appendChild(hint); card.appendChild(row);
@@ -598,14 +649,13 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
         var btn=document.createElement('button'); btn.className='copybtn'; btn.innerHTML='📋 Copiar';
         btn.addEventListener('click',function(){ copy(r.plain,btn); });
         var edit=document.createElement('button'); edit.className='btn'; edit.innerHTML='✏️ Editar';
-        edit.addEventListener('click',function(){ editingKey=tkey(tp); render(); });
+        edit.addEventListener('click',function(){ editingKey=tkey(tp); renderCards(); });
         actions.appendChild(btn); actions.appendChild(edit);
         if(TOVR[tkey(tp)]!=null){ var tag=document.createElement('span'); tag.style.cssText='font-size:10.5px;color:var(--green);font-weight:800;margin-left:auto'; tag.textContent='✏️ editado'; actions.appendChild(tag); }
         card.appendChild(bub); card.appendChild(actions);
       }
       host.appendChild(card);
     });
-    $('empty').style.display=shown?'none':'block';
   }
 
   function copy(text,btn){
@@ -620,55 +670,31 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
   var toTimer;
   function toast(){var t=$('toast');t.classList.add('show');clearTimeout(toTimer);toTimer=setTimeout(function(){t.classList.remove('show');},1400);}
 
-  function linkline(){
-    var t=(vals.transportadora||'').trim(); var el=$('linkline');
-    if(t && TLINKS[t]){ el.innerHTML='🔗 Link de rastreo: <a href="'+TLINKS[t]+'" target="_blank" rel="noopener">'+TLINKS[t]+'</a>'; }
-    else { el.innerHTML=''; }
-  }
-
-  // cats
-  var catHost=$('cats');
-  CATS.forEach(function(c){
-    var b=document.createElement('button'); b.className='chip'+(c===curCat?' on':''); b.textContent=c;
-    b.addEventListener('click',function(){ curCat=c; [].forEach.call(catHost.children,function(x){x.classList.remove('on');}); b.classList.add('on'); render(); });
-    catHost.appendChild(b);
-  });
-  // Flechas para deslizar la fila de categorías (para quien no puede arrastrar)
-  var _cp=$('catprev'), _cn=$('catnext');
-  if(_cp) _cp.addEventListener('click',function(){ catHost.scrollBy({left:-240,behavior:'smooth'}); });
-  if(_cn) _cn.addEventListener('click',function(){ catHost.scrollBy({left:240,behavior:'smooth'}); });
-
-  // inputs
-  FIELDS.forEach(function(k){
-    $(k).addEventListener('input',function(){ vals[k]=this.value; localStorage.setItem('gs_vals',JSON.stringify(vals)); if(k==='transportadora')linkline(); render(); });
-  });
-  $('transportadora').addEventListener('change',function(){ vals.transportadora=this.value; localStorage.setItem('gs_vals',JSON.stringify(vals)); linkline(); render(); });
-  $('saludo').addEventListener('change',function(){ saludoSel=this.value; localStorage.setItem('gs_saludo',saludoSel); render(); });
-  $('search').addEventListener('input',function(){ query=this.value; render(); });
-  $('clear').addEventListener('click',function(){ vals={}; localStorage.removeItem('gs_vals'); FIELDS.forEach(function(k){$(k).value='';}); linkline(); render(); });
-
   // ===== Lector de capturas (OCR con Tesseract, en el navegador) =====
-  var ocrFiles=[], drop=$('drop'), oinput=$('ocrInput'), thumbs=$('thumbs');
-  drop.addEventListener('click',function(){ oinput.click(); });
-  ['dragover','dragenter'].forEach(function(e){drop.addEventListener(e,function(ev){ev.preventDefault();drop.classList.add('over');});});
-  ['dragleave','drop'].forEach(function(e){drop.addEventListener(e,function(ev){ev.preventDefault();drop.classList.remove('over');});});
-  drop.addEventListener('drop',function(ev){ handleFiles(ev.dataTransfer.files); });
-  oinput.addEventListener('change',function(){ handleFiles(this.files); this.value=''; });
-  document.addEventListener('paste',function(ev){ if(ev.clipboardData&&ev.clipboardData.files&&ev.clipboardData.files.length) handleFiles(ev.clipboardData.files); });
-  $('ocrClear').addEventListener('click',function(){ ocrFiles=[]; renderThumbs(); $('ocrRawWrap').classList.remove('on'); $('ocrStatus').textContent=''; });
+  function initOCR(){
+    var drop=$('drop'), oinput=$('ocrInput'); if(!drop||!oinput) return;
+    drop.addEventListener('click',function(){ oinput.click(); });
+    ['dragover','dragenter'].forEach(function(e){drop.addEventListener(e,function(ev){ev.preventDefault();drop.classList.add('over');});});
+    ['dragleave','drop'].forEach(function(e){drop.addEventListener(e,function(ev){ev.preventDefault();drop.classList.remove('over');});});
+    drop.addEventListener('drop',function(ev){ handleFiles(ev.dataTransfer.files); });
+    oinput.addEventListener('change',function(){ handleFiles(this.files); this.value=''; });
+    var oc=$('ocrClear'); if(oc) oc.addEventListener('click',function(){ ocrFiles=[]; renderThumbs(); var rw=$('ocrRawWrap'); if(rw) rw.classList.remove('on'); var st=$('ocrStatus'); if(st) st.textContent=''; });
+    renderThumbs();
+  }
   function handleFiles(list){
+    if(!$('drop')) return;
     [].slice.call(list).forEach(function(f){ if(f.type.indexOf('image')===0 && ocrFiles.length<3){ ocrFiles.push({file:f,url:URL.createObjectURL(f)}); } });
     renderThumbs(); if(ocrFiles.length) runOCR();
   }
   function renderThumbs(){
-    thumbs.innerHTML='';
+    var thumbs=$('thumbs'); if(!thumbs) return; thumbs.innerHTML='';
     ocrFiles.forEach(function(f,i){
       var d=document.createElement('div'); d.className='thumb';
       d.innerHTML='<img src="'+f.url+'" alt=""><button title="Quitar">✕</button>';
       d.querySelector('button').addEventListener('click',function(){ ocrFiles.splice(i,1); renderThumbs(); });
       thumbs.appendChild(d);
     });
-    $('ocrClear').style.display=ocrFiles.length?'':'none';
+    var oc=$('ocrClear'); if(oc) oc.style.display=ocrFiles.length?'':'none';
   }
   function runOCR(){
     if(typeof Tesseract==='undefined'){ $('ocrStatus').textContent='No se pudo cargar el lector (revisa tu conexión a internet).'; return; }
@@ -688,7 +714,7 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
       st.textContent=found.length? ('✓ Detecté: '+found.join(', ')+'. Revisa y completa lo que falte.') : 'Listo. Revisa el texto detectado abajo y completa los campos.';
     }).catch(function(){ bar.classList.remove('on'); st.textContent='No se pudo leer la imagen. Prueba con una captura más nítida.'; });
   }
-  function setVal(k,v){ if(!v) return false; v=(''+v).trim(); vals[k]=v; $(k).value=v; localStorage.setItem('gs_vals',JSON.stringify(vals)); return true; }
+  function setVal(k,v){ if(!v) return false; v=(''+v).trim(); vals[k]=v; var el=$(k); if(el) el.value=v; save(); return true; }
   function parseInfo(t){
     var got=[];
     var lines=t.split(/\n/).map(function(s){return s.trim();}).filter(Boolean);
@@ -716,7 +742,7 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
     if(guia && guia!==vals.telefono && setVal('guia',guia)) got.push('guía');
     // Transportadora
     var TR={'interrapidisimo':'Interrapidísimo','inter rapidisimo':'Interrapidísimo','coordinadora':'Coordinadora','servientrega':'Servientrega','envia':'Envía','tcc':'TCC'};
-    for(var key in TR){ if(low.indexOf(key)>=0){ vals.transportadora=TR[key]; $('transportadora').value=TR[key]; localStorage.setItem('gs_vals',JSON.stringify(vals)); linkline(); got.push('transportadora'); break; } }
+    for(var key in TR){ if(low.indexOf(key)>=0){ vals.transportadora=TR[key]; var tel=$('transportadora'); if(tel) tel.value=TR[key]; save(); updLink(); got.push('transportadora'); break; } }
     // Producto ("<id> - descripción")
     var mp=t.match(/\d{4,}\s*[-–]\s*([A-Za-zÁÉÍÓÚÑáéíóúñ][^\n]{3,90})/);
     if(mp){ var prod=mp[1].split(/\s+\$/)[0].trim(); if(setVal('producto',prod)) got.push('producto'); }
@@ -730,11 +756,14 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
     var mc=t.match(/\$\s?[\d.]+\s+\$\s?[\d.]+\s+(\d{1,2})\s+\$/);
     if(mc && setVal('cantidad',mc[1])) got.push('cantidad');
     else if(vals.producto && !vals.cantidad){ setVal('cantidad','1'); }
-    render();
+    renderCards();
     return got;
   }
 
-  linkline(); render(); loadOvr();
+  // paste global (solo actúa si hay un panel OCR abierto)
+  document.addEventListener('paste',function(ev){ if($('drop') && ev.clipboardData && ev.clipboardData.files && ev.clipboardData.files.length) handleFiles(ev.clipboardData.files); });
+  if($('brand')) $('brand').addEventListener('click',showHome);
+  showHome(); loadOvr();
 })();
 </script>
 </body>
