@@ -498,6 +498,8 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
   function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
   function saludo(){var h=new Date().getHours();return h<12?'Buenos días':(h<19?'Buenas tardes':'Buenas noches');}
 
+  function _phNorm(s){ return (''+s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim().replace(/\s+/g,' '); }
+  var PH_ALIAS={'id':'idprod','id producto':'idprod','idproducto':'idprod','idprod':'idprod','id del producto':'idprod','nombre':'nombre','producto':'producto','guia':'guia','valor':'valor','precio':'valor','oferta':'oferta','cantidad':'cantidad','direccion':'direccion','transportadora':'transportadora','link':'link'};
   function build(body){
     var plain=body, html=esc(body);
     var g=saludoSel; if(g==='auto') g=saludo();
@@ -517,6 +519,9 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
       if(v){ plain=plain.split(tok).join(v); html=html.split(tok).join('<span class="v">'+esc(v)+'</span>'); }
       else { plain=plain.split(tok).join('‹'+LABELS[k]+'›'); html=html.split(tok).join('<span class="miss">‹'+LABELS[k]+'›</span>'); }
     });
+    // Placeholders con <corchetes> (ej. <ID>, <nombre>) — alias amigables además de los {tokens}
+    plain=plain.replace(/<([^<>\n]{1,24})>/g,function(mm,inner){ var f=PH_ALIAS[_phNorm(inner)]; if(!f) return mm; var v=map[f]; return v?v:'‹'+(LABELS[f]||f)+'›'; });
+    html=html.replace(/&lt;([^<>\n]{1,24}?)&gt;/g,function(mm,inner){ var f=PH_ALIAS[_phNorm(inner)]; if(!f) return mm; var v=map[f]; return v?'<span class="v">'+esc(v)+'</span>':'<span class="miss">‹'+(LABELS[f]||f)+'›</span>'; });
     return {plain:plain,html:html};
   }
 
@@ -545,8 +550,12 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
 
   function escAttr(s){ return esc(''+s).replace(/"/g,'&quot;'); }
   function fieldsForTpls(tpls){
-    var set={}, needSaludo=false, tokRe=/\{(\w+)\}/g;
-    tpls.forEach(function(tp){ var bd=tbody(tp); var m; tokRe.lastIndex=0; while((m=tokRe.exec(bd))){ var f=TOKEN2FIELD[m[1]]; if(f) set[f]=1; if(m[1]==='saludo') needSaludo=true; } if(/\bHola\b/.test(bd)) needSaludo=true; });
+    var set={}, needSaludo=false, tokRe=/\{(\w+)\}/g, phRe=/<([^<>\n]{1,24})>/g;
+    tpls.forEach(function(tp){ var bd=tbody(tp); var m;
+      tokRe.lastIndex=0; while((m=tokRe.exec(bd))){ var f=TOKEN2FIELD[m[1]]; if(f) set[f]=1; if(m[1]==='saludo') needSaludo=true; }
+      phRe.lastIndex=0; while((m=phRe.exec(bd))){ var a=PH_ALIAS[_phNorm(m[1])]; if(a){ var fld=(a==='link')?'transportadora':a; if(FIELD_DEFS[fld]) set[fld]=1; } }
+      if(/\bHola\b/.test(bd)) needSaludo=true;
+    });
     return {fields:FIELD_ORDER.filter(function(f){return set[f];}), saludo:needSaludo};
   }
   function fieldInput(k){
