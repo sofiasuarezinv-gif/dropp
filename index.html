@@ -528,25 +528,39 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
   // Ediciones de copys guardadas en el navegador (sobreescriben el texto por defecto)
   var TOVR; try{ TOVR=JSON.parse(localStorage.getItem('dropp_ovr')||'{}'); }catch(e){ TOVR={}; }
   var editingKey=null;
-  function tkey(tp){ return tp.c+'|'+tp.t; }
-  function tbody(tp){ var k=tkey(tp); return (TOVR[k]!=null)?TOVR[k]:tp.b; }
+  // Bloques (categorías) y mensajes creados por el usuario — se guardan PARA SIEMPRE
+  var CCATS; try{ CCATS=JSON.parse(localStorage.getItem('dropp_ccats')||'[]'); }catch(e){ CCATS=[]; }   // [{folderId,name,icon}]
+  var CTPLS; try{ CTPLS=JSON.parse(localStorage.getItem('dropp_ctpls')||'[]'); }catch(e){ CTPLS=[]; }   // [{id,c,t,b,_custom:true}]
+  CTPLS.forEach(function(x){ x._custom=true; });
+  function tkey(tp){ return tp._custom ? ('u:'+tp.id) : (tp.c+'|'+tp.t); }
+  function tbody(tp){ if(tp._custom) return tp.b||''; var k=tkey(tp); return (TOVR[k]!=null)?TOVR[k]:tp.b; }
+  function catIcon(cat){ if(CAT_ICON[cat]) return CAT_ICON[cat]; var cc=CCATS.filter(function(c){return c.name===cat;})[0]; return (cc&&cc.icon)?cc.icon:'📄'; }
+  function folderCats(f){ return f.cats.concat(CCATS.filter(function(c){return c.folderId===f.id;}).map(function(c){return c.name;})); }
+  function allTpls(){ return T.concat(CTPLS); }
+  function newId(){ return 'u'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36); }
   // Guardado PERMANENTE + compartido: se guarda en el backend de productos (GitHub) y también local (cache/instantáneo).
   var DP_API='https://an-lisis-producto.onrender.com/api/dropp_copys';
   var _ovrPid=null, _pushing=false, _pushAgain=false;
-  function saveOvr(){ try{ localStorage.setItem('dropp_ovr',JSON.stringify(TOVR)); }catch(e){} _pushOvr(); }
+  function saveOvr(){ try{ localStorage.setItem('dropp_ovr',JSON.stringify(TOVR)); localStorage.setItem('dropp_ccats',JSON.stringify(CCATS)); localStorage.setItem('dropp_ctpls',JSON.stringify(CTPLS)); }catch(e){} _pushOvr(); }
   function _pushOvr(){
     if(_pushing){ _pushAgain=true; return; }
     _pushing=true;
-    var body=JSON.stringify({data:{ovr:TOVR}});
+    var body=JSON.stringify({data:{ovr:TOVR, ccats:CCATS, ctpls:CTPLS}});
     var done=function(){ _pushing=false; if(_pushAgain){ _pushAgain=false; _pushOvr(); } };
     if(_ovrPid){ fetch(DP_API+'/'+encodeURIComponent(_ovrPid),{method:'PUT',headers:{'Content-Type':'application/json'},body:body}).then(done,done); }
     else { fetch(DP_API,{method:'POST',headers:{'Content-Type':'application/json'},body:body}).then(function(r){return r.json();}).then(function(o){ if(o&&o.pid)_ovrPid=o.pid; done(); },done); }
   }
   function loadOvr(){
     fetch(DP_API).then(function(r){return r.json();}).then(function(arr){
-      if(Array.isArray(arr) && arr.length){ _ovrPid=arr[0].pid; if(arr[0].ovr && typeof arr[0].ovr==='object'){ TOVR=arr[0].ovr; try{ localStorage.setItem('dropp_ovr',JSON.stringify(TOVR)); }catch(e){} if(editingKey===null && nav.view==='item') renderCards(); } }
+      if(Array.isArray(arr) && arr.length){ _ovrPid=arr[0].pid;
+        if(arr[0].ovr && typeof arr[0].ovr==='object'){ TOVR=arr[0].ovr; try{ localStorage.setItem('dropp_ovr',JSON.stringify(TOVR)); }catch(e){} }
+        if(Array.isArray(arr[0].ccats)){ CCATS=arr[0].ccats; try{ localStorage.setItem('dropp_ccats',JSON.stringify(CCATS)); }catch(e){} }
+        if(Array.isArray(arr[0].ctpls)){ CTPLS=arr[0].ctpls; CTPLS.forEach(function(x){x._custom=true;}); try{ localStorage.setItem('dropp_ctpls',JSON.stringify(CTPLS)); }catch(e){} }
+        if(editingKey===null) renderCurrent();
+      }
     }).catch(function(){});
   }
+  function renderCurrent(){ if(nav.view==='home') showHome(); else if(nav.view==='folder') showFolder(nav.folderId); else if(nav.view==='item'&&curItem) renderItem(curItem); }
 
   function escAttr(s){ return esc(''+s).replace(/"/g,'&quot;'); }
   function fieldsForTpls(tpls){
@@ -586,25 +600,44 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
   function showHome(){
     nav={view:'home',folderId:null}; curItem=null; editingKey=null; crumbs();
     var h='<div class="folders">';
-    FOLDERS.forEach(function(f){ var n=T.filter(function(tp){return f.cats.indexOf(tp.c)>=0;}).length;
+    FOLDERS.forEach(function(f){ var cats=folderCats(f); var n=allTpls().filter(function(tp){return cats.indexOf(tp.c)>=0;}).length;
       h+='<div class="folder" onclick="__nav(\'folder\',\''+f.id+'\')"><div class="fic">'+f.icon+'</div><div class="fn">'+esc(f.name)+'</div><div class="fd">'+esc(f.desc)+'</div><div class="fcount">'+n+' plantillas</div></div>'; });
     h+='</div>'; $('app').innerHTML=h;
   }
   function itemsForFolder(f){
-    if(f.cats.length>1){ return f.cats.map(function(cat){ return {kind:'cat',folderId:f.id,cat:cat,label:cat,count:T.filter(function(tp){return tp.c===cat;}).length}; }); }
-    var items=[]; T.forEach(function(tp,i){ if(tp.c===f.cats[0]) items.push({kind:'tpl',folderId:f.id,cat:tp.c,idx:i,label:tp.t,count:1}); }); return items;
+    var cats=folderCats(f);
+    if(cats.length>1){ return cats.map(function(cat){ return {kind:'cat',folderId:f.id,cat:cat,label:cat,count:allTpls().filter(function(tp){return tp.c===cat;}).length}; }); }
+    var items=[]; allTpls().forEach(function(tp){ if(tp.c===cats[0]) items.push({kind:'tpl',folderId:f.id,cat:tp.c,tp:tp,label:tp.t,count:1}); }); return items;
   }
   function showFolder(fid){
     var f=FOLDERS.filter(function(x){return x.id===fid;})[0]; if(!f){ showHome(); return; }
     nav={view:'folder',folderId:fid}; curItem=null; editingKey=null; crumbs();
     curItems=itemsForFolder(f);
     var h='<div class="items">';
-    curItems.forEach(function(it,i){ h+='<div class="item" onclick="__openItem('+i+')"><span class="in">'+(CAT_ICON[it.label]||'📄')+' '+esc(it.label)+'</span><span class="ic2">'+it.count+'</span></div>'; });
-    h+='</div>'; $('app').innerHTML=h;
+    curItems.forEach(function(it,i){
+      var isCustom = it.kind==='cat' && CCATS.some(function(c){return c.folderId===f.id&&c.name===it.label;});
+      h+='<div class="item" onclick="__openItem('+i+')"><span class="in">'+catIcon(it.label)+' '+esc(it.label)+'</span><span class="ic2">'+it.count+'</span>'+
+         (isCustom?'<button class="btn ghost" title="Borrar bloque" style="padding:3px 8px;font-size:12px;margin-left:8px" onclick="event.stopPropagation();__delCat(\''+f.id+'\',\''+escAttr(it.label)+'\')">🗑️</button>':'')+'</div>';
+    });
+    h+='</div>';
+    h+='<div style="margin-top:16px"><button class="copybtn" onclick="__addCat(\''+f.id+'\')">➕ Agregar bloque</button></div>';
+    $('app').innerHTML=h;
   }
+  window.__addCat=function(fid){
+    var f=FOLDERS.filter(function(x){return x.id===fid;})[0]; if(!f) return;
+    var name=prompt('Nombre del bloque nuevo:'); if(!name) return; name=name.trim(); if(!name) return;
+    if(folderCats(f).indexOf(name)>=0){ alert('Ya existe un bloque con ese nombre.'); return; }
+    var icon=(prompt('Emoji para el bloque (opcional):','📁')||'📁').trim()||'📁';
+    CCATS.push({folderId:fid,name:name,icon:icon}); saveOvr(); showFolder(fid);
+  };
+  window.__delCat=function(fid,name){
+    if(!confirm('¿Borrar el bloque "'+name+'" y los mensajes que creaste ahí?')) return;
+    CCATS=CCATS.filter(function(c){return !(c.folderId===fid&&c.name===name);});
+    CTPLS=CTPLS.filter(function(t){return t.c!==name;}); saveOvr(); showFolder(fid);
+  };
   function renderItem(it){
     nav={view:'item',folderId:it.folderId}; curItem=it; editingKey=null;
-    curTpls = it.kind==='tpl' ? [T[it.idx]] : T.filter(function(tp){return tp.c===it.cat;});
+    curTpls = it.kind==='tpl' ? [it.tp] : allTpls().filter(function(tp){return tp.c===it.cat;});
     var fi=fieldsForTpls(curTpls); crumbs();
     var h='';
     if(fi.fields.length || fi.saludo){
@@ -615,6 +648,7 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
       h+='</section>';
     }
     h+='<main class="cards" id="itemCards"></main>';
+    if(it.cat){ h+='<div style="margin-top:6px"><button class="copybtn" onclick="__addTpl()">➕ Agregar mensaje a este bloque</button></div>'; }
     $('app').innerHTML=h;
     if($('saludo')){ $('saludo').value=saludoSel; $('saludo').addEventListener('change',function(){ saludoSel=this.value; localStorage.setItem('gs_saludo',saludoSel); renderCards(); }); }
     fi.fields.forEach(function(k){ var el=$(k); if(!el) return; var ev=(FIELD_DEFS[k].type==='select')?'change':'input'; el.addEventListener(ev,function(){ vals[k]=this.value; save(); if(k==='transportadora') updLink(); renderCards(); }); });
@@ -625,6 +659,9 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
   function updLink(){ var el=$('linkline'); if(!el) return; var t=(vals.transportadora||'').trim(); if(t&&TLINKS[t]){ el.innerHTML='🔗 Link de rastreo: <a href="'+TLINKS[t]+'" target="_blank" rel="noopener">'+TLINKS[t]+'</a>'; } else el.innerHTML=''; }
   window.__nav=function(v,fid){ if(v==='home') showHome(); else if(v==='folder') showFolder(fid); };
   window.__openItem=function(i){ var it=curItems[i]; if(it) renderItem(it); };
+  window.__addTpl=function(){ if(!curItem||!curItem.cat) return;
+    var t={id:newId(),c:curItem.cat,t:'Nuevo mensaje',b:'',_custom:true}; CTPLS.push(t); saveOvr();
+    renderItem(curItem); editingKey=tkey(t); renderCards(); };
 
   function renderCards(){
     var host=$('itemCards'); if(!host) return; host.innerHTML='';
@@ -635,6 +672,13 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
       th.innerHTML='<span class="tt">'+esc(tp.t)+'</span><span class="cat">'+esc(tp.c)+'</span>';
       card.appendChild(th);
       if(editingKey===tkey(tp)){
+        var titleInput=null;
+        if(tp._custom){
+          titleInput=document.createElement('input');
+          titleInput.style.cssText='width:100%;background:var(--bubble);border:1px solid var(--bubble-line);border-radius:10px;color:var(--ink);padding:9px 12px;font-family:var(--sans);font-size:14px;font-weight:800;margin-bottom:9px;box-sizing:border-box;outline:none';
+          titleInput.value=tp.t; titleInput.placeholder='Título del mensaje';
+          card.appendChild(titleInput);
+        }
         var ta=document.createElement('textarea');
         ta.style.cssText='width:100%;min-height:180px;background:var(--bubble);border:1px solid var(--bubble-line);border-radius:12px;color:var(--ink);padding:12px 14px;font-family:var(--sans);font-size:13.5px;line-height:1.55;resize:vertical;outline:none;box-sizing:border-box';
         ta.value=body;
@@ -642,11 +686,22 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
         hint.textContent='Podés usar {nombre}, {producto}, {guia}, {saludo}, {idprod}, {valor}… se reemplazan solos.';
         var row=document.createElement('div'); row.style.cssText='display:flex;gap:8px;margin-top:11px;flex-wrap:wrap';
         var svb=document.createElement('button'); svb.className='copybtn'; svb.innerHTML='💾 Guardar';
-        svb.addEventListener('click',function(){ TOVR[tkey(tp)]=ta.value; saveOvr(); editingKey=null; renderItem(curItem); });
+        svb.addEventListener('click',function(){
+          if(tp._custom){ tp.t=(titleInput.value||'').trim()||'Mensaje'; tp.b=ta.value; saveOvr(); }
+          else { TOVR[tkey(tp)]=ta.value; saveOvr(); }
+          editingKey=null; renderItem(curItem);
+        });
         var cancel=document.createElement('button'); cancel.className='btn'; cancel.textContent='Cancelar';
-        cancel.addEventListener('click',function(){ editingKey=null; renderCards(); });
+        cancel.addEventListener('click',function(){
+          if(tp._custom && !(tp.b||'').trim() && tp.t==='Nuevo mensaje'){ CTPLS=CTPLS.filter(function(x){return x!==tp;}); saveOvr(); editingKey=null; renderItem(curItem); return; }
+          editingKey=null; renderCards();
+        });
         row.appendChild(svb); row.appendChild(cancel);
-        if(TOVR[tkey(tp)]!=null){
+        if(tp._custom){
+          var del=document.createElement('button'); del.className='btn'; del.textContent='🗑️ Borrar';
+          del.addEventListener('click',function(){ if(!confirm('¿Borrar este mensaje?')) return; CTPLS=CTPLS.filter(function(x){return x!==tp;}); saveOvr(); editingKey=null; renderItem(curItem); });
+          row.appendChild(del);
+        } else if(TOVR[tkey(tp)]!=null){
           var rst=document.createElement('button'); rst.className='btn'; rst.textContent='↩️ Restaurar original';
           rst.addEventListener('click',function(){ delete TOVR[tkey(tp)]; saveOvr(); editingKey=null; renderItem(curItem); });
           row.appendChild(rst);
@@ -661,6 +716,7 @@ El stock de este producto: {idprod}, ¿se encuentra actualizado en Dropi?`},
         edit.addEventListener('click',function(){ editingKey=tkey(tp); renderCards(); });
         actions.appendChild(btn); actions.appendChild(edit);
         if(TOVR[tkey(tp)]!=null){ var tag=document.createElement('span'); tag.style.cssText='font-size:10.5px;color:var(--green);font-weight:800;margin-left:auto'; tag.textContent='✏️ editado'; actions.appendChild(tag); }
+        else if(tp._custom){ var tag2=document.createElement('span'); tag2.style.cssText='font-size:10.5px;color:#a78bfa;font-weight:800;margin-left:auto'; tag2.textContent='✨ tuyo'; actions.appendChild(tag2); }
         card.appendChild(bub); card.appendChild(actions);
       }
       host.appendChild(card);
